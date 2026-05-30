@@ -3,12 +3,17 @@ services:
     name: budgets-proxy
     runtime: node
     plan: free
+    region: oregon
     buildCommand: npm install
     startCommand: node server.mjs
     envVars:
       - key: NODE_ENV
-        value: production
+        sync: false
       - key: PORT
-        value: 10000
-    envVarGroups:
-      - envVarGroup: secrets
+        value: "10000"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
