@@ -2,15 +2,25 @@
 
 Backend proxy for the "Budgets Around Me!" iOS app. Routes OpenAI and Google Places API calls through authenticated endpoints so API keys are never exposed to the client.
 
-## Architecture
+## One-Click Deploy to Render
 
-```
-iOS App → Sign in with Apple/Google → Backend Proxy (JWT) → OpenAI/Google APIs
-                                      ↑
-                                 YOUR API KEYS
-```
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/WilBGit/budgets-proxy)
 
-Users authenticate with their Apple/Google account. The server issues a JWT. All subsequent API calls include the JWT. The server proxies requests to OpenAI and Google using **your** API keys.
+## Manual Deploy
+
+1. Fork this repo
+2. Go to [Render Dashboard](https://dashboard.render.com) → New Web Service
+3. Connect your GitHub repo: `WilBGit/budgets-proxy`
+4. Settings:
+   - **Build Command:** `npm install`
+   - **Start Command:** `node server.mjs`
+   - **Environment:** Node
+   - **Plan:** Free
+5. Add environment variables:
+   - `OPENAI_API_KEY` — Your OpenAI API key
+   - `GOOGLE_PLACES_API_KEY` — Your Google Places API key
+   - `JWT_SECRET` — Random 32-byte hex (`openssl rand -hex 32`)
+6. Deploy!
 
 ## Endpoints
 
@@ -23,68 +33,12 @@ Users authenticate with their Apple/Google account. The server issues a JWT. All
 | GET | `/api/places/:id` | JWT | Proxy Google Place details |
 | GET | `/health` | None | Health check |
 
-## Quick Start
-
-```bash
-# 1. Copy and configure
-cp .env.example .env
-# Edit .env with your API keys and JWT secret
-
-# 2. Install dependencies
-npm install
-
-# 3. Run
-npm start
-
-# 4. Test
-curl http://localhost:3000/health
-```
-
-## Deployment
-
-### Fly.io (recommended)
-
-```bash
-fly launch --name budgets-proxy
-fly secrets set OPENAI_API_KEY=sk-... GOOGLE_PLACES_API_KEY=AIzaSy... JWT_SECRET=$(openssl rand -hex 32)
-fly deploy
-```
-
-### Railway
-
-```bash
-railway init
-railway variables set OPENAI_API_KEY=sk-... GOOGLE_PLACES_API_KEY=AIzaSy... JWT_SECRET=$(openssl rand -hex 32)
-railway up
-```
-
-### Docker
-
-```bash
-docker build -t budgets-proxy .
-docker run -p 3000:3000 --env-file .env budgets-proxy
-```
-
-## iOS Configuration
-
-Set the proxy URL in `ProxyService.swift`:
-
-```swift
-// Production
-private let baseURL = URL(string: "https://budgets-proxy.fly.dev")!
-
-// Development
-#if DEBUG
-private let baseURL = URL(string: "http://localhost:3000")!
-#endif
-```
-
 ## Security
 
-- API keys are **server-side only** — never sent to the iOS client
+- API keys stored server-side only — never sent to client
 - JWT tokens expire after 7 days
 - Rate limiting: 60 requests/minute per IP
 - Apple identity tokens verified against Apple's JWKS
-- Google ID tokens verified against Google's tokeninfo endpoint
+- Google ID tokens verified via Google's tokeninfo endpoint
 - CORS restricted to app domains
 - Helmet.js security headers
