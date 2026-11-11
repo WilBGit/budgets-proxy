@@ -1,44 +1,74 @@
-# Budgets Around Me! — Proxy Server
+# Budgets Around Me! Proxy
 
-Backend proxy for the "Budgets Around Me!" iOS app. Routes OpenAI and Google Places API calls through authenticated endpoints so API keys are never exposed to the client.
+A small Node.js backend boundary for the Budgets Around Me! iOS app. It keeps provider credentials on the server and gives the mobile client a narrow, authenticated interface for AI assistance and nearby-place discovery.
 
-## One-Click Deploy to Render
+The central design goal is simple: the iOS app can call the product API, but it never needs to ship an OpenAI or Google Places secret to every device.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/WilBGit/budgets-proxy)
+## Responsibilities
 
-## Manual Deploy
+- Verify Apple and Google identity tokens.
+- Issue application JWTs after successful identity verification.
+- Proxy approved OpenAI chat-completion requests.
+- Proxy Google Places nearby-search and place-details requests.
+- Apply rate limiting, security headers, CORS policy, and input validation.
+- Provide a health endpoint for deployment checks.
 
-1. Fork this repo
-2. Go to [Render Dashboard](https://dashboard.render.com) → New Web Service
-3. Connect your GitHub repo: `WilBGit/budgets-proxy`
-4. Settings:
-   - **Build Command:** `npm install`
-   - **Start Command:** `node server.mjs`
-   - **Environment:** Node
-   - **Plan:** Free
-5. Add environment variables:
-   - `OPENAI_API_KEY` — Your OpenAI API key
-   - `GOOGLE_PLACES_API_KEY` — Your Google Places API key
-   - `JWT_SECRET` — Random 32-byte hex (`openssl rand -hex 32`)
-6. Deploy!
+## API surface
 
-## Endpoints
+| Method | Path | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/auth/apple` | None | Verify an Apple identity token and issue a JWT. |
+| `POST` | `/auth/google` | None | Verify a Google identity token and issue a JWT. |
+| `POST` | `/api/openai` | JWT | Forward an approved AI request using the server-side key. |
+| `GET` | `/api/places` | JWT | Search for nearby places. |
+| `GET` | `/api/places/:id` | JWT | Retrieve place details. |
+| `GET` | `/health` | None | Return service health. |
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/auth/apple` | None | Verify Apple identity token, issue JWT |
-| POST | `/auth/google` | None | Verify Google ID token, issue JWT |
-| POST | `/api/openai` | JWT | Proxy OpenAI chat completions |
-| GET | `/api/places` | JWT | Proxy Google Places nearby search |
-| GET | `/api/places/:id` | JWT | Proxy Google Place details |
-| GET | `/health` | None | Health check |
+## Local setup
 
-## Security
+Requirements:
 
-- API keys stored server-side only — never sent to client
-- JWT tokens expire after 7 days
-- Rate limiting: 60 requests/minute per IP
-- Apple identity tokens verified against Apple's JWKS
-- Google ID tokens verified via Google's tokeninfo endpoint
-- CORS restricted to app domains
-- Helmet.js security headers
+- Node.js and npm
+- The environment variables documented in `.env.example`
+- A reachable OpenAI account and Google Places account for live provider calls
+
+Install and run:
+
+```bash
+npm install
+node server.mjs
+```
+
+The exact listening port and deployment configuration are defined by the project runtime files. Use the health endpoint before connecting the iOS app.
+
+## Deployment
+
+The repository includes Render and container-oriented configuration. The Render deployment path can be started from the repository's one-click configuration, or deployed manually with:
+
+- Build command: `npm install`
+- Start command: `node server.mjs`
+- Environment variables configured in the hosting provider, never committed to Git
+
+## Security controls
+
+- Provider keys stay server-side.
+- JWTs are signed with a private server secret and expire.
+- Rate limiting reduces abuse from a single client or IP.
+- Apple tokens are checked against Apple's signing keys.
+- Google identity tokens are verified before issuing an application token.
+- CORS and security headers limit browser-facing exposure.
+- The repository contains configuration names and examples, not live secrets.
+
+Generate a strong JWT secret with a local command such as `openssl rand -hex 32`, then store it in the hosting provider's secret configuration. Never paste the generated value into this README, source code, or a public issue.
+
+## Relationship to the iOS app
+
+The companion client is here:
+
+https://github.com/WilBGit/Budgets-Around-Me-
+
+The two repositories are intentionally separated. The iOS client owns the user experience. This service owns provider access, authentication verification, and the server-side security boundary.
+
+## Production checklist
+
+Before a public release, verify provider quotas, authentication replay protections, request-size limits, error redaction, logging privacy, CORS origins, rate limits, dependency updates, TLS, monitoring, and a complete mobile-to-backend integration test. A successful deployment is not evidence that the provider credentials or identity flow are configured safely.
