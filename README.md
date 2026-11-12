@@ -1,7 +1,5 @@
 # Budgets Around Me! Proxy
 
-[![CI](https://github.com/WilBGit/budgets-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/WilBGit/budgets-proxy/actions/workflows/ci.yml)
-
 A small Node.js backend boundary for the Budgets Around Me! iOS app. It keeps provider credentials on the server and gives the mobile client a narrow, authenticated interface for AI assistance and nearby-place discovery.
 
 The central design goal is simple: the iOS app can call the product API, but it never needs to ship an OpenAI or Google Places secret to every device.
