@@ -1,5 +1,7 @@
 # Budgets Around Me! Proxy
 
+[![CI](https://github.com/WilBGit/budgets-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/WilBGit/budgets-proxy/actions/workflows/ci.yml)
+
 A small Node.js backend boundary for the Budgets Around Me! iOS app. It keeps provider credentials on the server and gives the mobile client a narrow, authenticated interface for AI assistance and nearby-place discovery.
 
 The central design goal is simple: the iOS app can call the product API, but it never needs to ship an OpenAI or Google Places secret to every device.
@@ -65,7 +67,7 @@ Generate a strong JWT secret with a local command such as `openssl rand -hex 32`
 
 The companion client is here:
 
-https://github.com/example-org/Budgets-Around-Me-
+https://github.com/WilBGit/Budgets-Around-Me-
 
 The two repositories are intentionally separated. The iOS client owns the user experience. This service owns provider access, authentication verification, and the server-side security boundary.
 
